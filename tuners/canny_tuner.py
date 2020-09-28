@@ -5,11 +5,19 @@ import numpy as np
 import utils
 import argparse
 
+CANNY_CFG_FILE = '.canny_parameters.cfg'
+
+class CannyCfg:
+    def __init__(self, filter_size, threshold1, threshold2):
+        self.filter_size = filter_size
+        self.threshold1 = threshold1
+        self.threshold2 = threshold2
+
 
 class CannyTuner:
-    def __init__(self, image_path, filter_size=1, threshold1=0, threshold2=0):
+    def __init__(self, image, filter_size=13, threshold1=28, threshold2=115):
         self._TITLE = 'Canny Parameter Tuner'
-        self._image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+        self._image = image 
         self._filter_size = filter_size
         self._threshold1 = threshold1
         self._threshold2 = threshold2
@@ -28,9 +36,9 @@ class CannyTuner:
 
         cv.namedWindow(self._TITLE, cv.WINDOW_NORMAL | cv.WINDOW_KEEPRATIO)
 
+        cv.createTrackbar('filter_size', self._TITLE, self._filter_size, 20, onchangeFilterSize)
         cv.createTrackbar('threshold1', self._TITLE, self._threshold1, 255, onchangeThreshold1)
         cv.createTrackbar('threshold2', self._TITLE, self._threshold2, 255, onchangeThreshold2)
-        cv.createTrackbar('filter_size', self._TITLE, self._filter_size, 20, onchangeFilterSize)
 
         self._render()
         key = cv.waitKey()
@@ -45,7 +53,7 @@ class CannyTuner:
     def _render(self):
         smoothed_img = cv.GaussianBlur(self._image, (self._filter_size, self._filter_size), sigmaX=0, sigmaY=0)
         edge_img = cv.Canny(smoothed_img, self._threshold1, self._threshold2)
-        utils.Plot(
+        utils.plot(
             shape = (1, 2),
             imgs = [
                 self._image,
@@ -55,19 +63,33 @@ class CannyTuner:
         )
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Visualizes the line for hough transform.')
-    parser.add_argument('filename')
+def main(image_path):
+    image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+    cfg = utils.load_cfg(CANNY_CFG_FILE)
 
-    print(
-        CannyTuner(
-            image_path = parser.parse_args().filename,
-            filter_size = 13,
-            threshold1 = 28,
-            threshold2 = 115,
-        ).get_results(),
-    )
+    if cfg:
+        results = CannyCfg(
+            *CannyTuner(
+                image = image, 
+                filter_size = cfg.filter_size,
+                threshold1 = cfg.threshold1,
+                threshold2 = cfg.threshold2,
+            ).get_results()
+        )
+    else:
+        results = CannyCfg(
+            *CannyTuner(
+                image = image, 
+            ).get_results()
+        )
+
+    utils.save_cfg(CANNY_CFG_FILE, results)
+
+    print(utils.convert_to_dict(results))
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Visualizes the line for hough transform.')
+    parser.add_argument('img_path')
+
+    main(parser.parse_args().img_path)

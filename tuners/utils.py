@@ -58,7 +58,7 @@ def dict_to_obj(our_dict):
         obj = our_dict
     return obj
 
-def load_cfg(file_path):
+def load_cfg(file_path, default_value):
     try:
         with open(file_path, 'r') as cfg_file:
             return json.load(
@@ -66,7 +66,7 @@ def load_cfg(file_path):
                 object_hook = dict_to_obj,
             )
     except FileNotFoundError:
-        return None
+        return default_value
 
 def save_cfg(file_path, obj):
     with open(file_path, 'w') as cfg_file:

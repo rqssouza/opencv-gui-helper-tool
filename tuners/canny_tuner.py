@@ -6,6 +6,13 @@ import utils
 import argparse
 
 CANNY_CFG_FILE = '.canny_parameters.cfg'
+CANNY_DEFAULT_VALUES = (13, 28, 115) 
+
+
+def Process(image, filter_size, threshold1, threshold2):
+    smoothed_img = cv.GaussianBlur(image, (filter_size, filter_size), sigmaX=0, sigmaY=0)
+    return cv.Canny(smoothed_img, threshold1, threshold2)
+
 
 class CannyCfg:
     def __init__(self, filter_size, threshold1, threshold2):
@@ -15,7 +22,7 @@ class CannyCfg:
 
 
 class CannyTuner:
-    def __init__(self, image, filter_size=13, threshold1=28, threshold2=115):
+    def __init__(self, image, filter_size, threshold1, threshold2):
         self._TITLE = 'Canny Parameter Tuner'
         self._image = image 
         self._filter_size = filter_size
@@ -51,13 +58,17 @@ class CannyTuner:
         return (self._filter_size, self._threshold1, self._threshold2)
 
     def _render(self):
-        smoothed_img = cv.GaussianBlur(self._image, (self._filter_size, self._filter_size), sigmaX=0, sigmaY=0)
-        edge_img = cv.Canny(smoothed_img, self._threshold1, self._threshold2)
+        edges = Process(
+            image = self._image,
+            filter_size = self._filter_size,
+            threshold1 = self._threshold1,
+            threshold2 = self._threshold2,
+        )
         utils.plot(
             shape = (1, 2),
             imgs = [
                 self._image,
-                edge_img,
+                edges,
             ],
             title = self._TITLE,
         )
@@ -65,27 +76,20 @@ class CannyTuner:
 
 def main(image_path):
     image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
-    cfg = utils.load_cfg(CANNY_CFG_FILE)
+    cfg = utils.load_cfg(CANNY_CFG_FILE, CANNY_DEFAULT_VALUES)
 
-    if cfg:
-        results = CannyCfg(
-            *CannyTuner(
-                image = image, 
-                filter_size = cfg.filter_size,
-                threshold1 = cfg.threshold1,
-                threshold2 = cfg.threshold2,
-            ).get_results()
-        )
-    else:
-        results = CannyCfg(
-            *CannyTuner(
-                image = image, 
-            ).get_results()
-        )
+    cfg = CannyCfg(
+        *CannyTuner(
+            image = image, 
+            filter_size = cfg.filter_size,
+            threshold1 = cfg.threshold1,
+            threshold2 = cfg.threshold2,
+        ).get_results()
+    )
 
-    utils.save_cfg(CANNY_CFG_FILE, results)
+    utils.save_cfg(CANNY_CFG_FILE, cfg)
 
-    print(utils.convert_to_dict(results))
+    print(utils.convert_to_dict(cfg))
 
 
 if __name__ == '__main__':

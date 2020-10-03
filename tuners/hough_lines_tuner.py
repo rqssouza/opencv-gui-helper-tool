@@ -49,7 +49,7 @@ def Process(
         minLineLength = minLineLength,
         maxLineGap = maxLineGap,
     )
-    lines = lines if type(lines) != None else []
+    lines = lines if type(lines) == np.ndarray else []
 
     line_image = np.copy(image) * 0
 
@@ -199,9 +199,9 @@ class HoughLinesTuner:
         )
 
 
-def main(image_path):
+def main(image_path, config):
     image = cv.imread(image_path)
-    cfg = utils.load_cfg(HOUGH_CFG_FILE, HOUGH_DEFAULT_VALUES)
+    cfg = utils.load_cfg(config, HOUGH_DEFAULT_VALUES)
 
     cfg = HoughCfg( 
         *HoughLinesTuner(
@@ -217,12 +217,14 @@ def main(image_path):
         ).get_results()
     )
 
-    utils.save_cfg(HOUGH_CFG_FILE, cfg)
+    utils.save_cfg(config, cfg)
 
     print(utils.convert_to_dict(cfg))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualizes the line for hough transform.')
-    parser.add_argument('img_path')
+    parser.add_argument('img_path', help='Image file')
+    parser.add_argument('-c', '--config', help='Config file', default=HOUGH_CFG_FILE)
+    args = parser.parse_args()
 
-    main(parser.parse_args().img_path)
+    main(args.img_path, args.config)

@@ -6,6 +6,12 @@ import json
 
 
 class TunerCfg:
+    ''' Represents the configuration object of Tuner class
+    :param cfg_file: File containing the configuration
+    :type cfg_file: str
+    :param default_attrs: Default configuration if cfg_file doesn't exit
+    :type cfg_file: list
+    '''
     def __init__(self, cfg_file, default_attrs = []):
         self._cfg_file = cfg_file
         self._cfg_attrs = self._load(default_attrs)
@@ -27,24 +33,56 @@ class TunerCfg:
 
 
     def get_value(self, attr):
+        '''Get value by attr name
+
+        :param attr: Name of the attribute
+        :type amount: str
+
+        :returns: The value of the attribute
+        :rtype: int
+        '''
         return [i for i in self._cfg_attrs if i[0] == attr][0][1]
 
 
     def get_attrs(self):
+        '''Get value by attr name
+
+        :returns: The list of attributes
+        :rtype: int
+        '''
         return self._cfg_attrs
 
 
     def set_value(self, attr, val):
+        '''Set value by attr name
+
+        :param attr: Name of the attribute
+        :type amount: str
+        :param val: Value of the attribute
+        :type amount: int 
+        '''
         [i for i in self._cfg_attrs if i[0] == attr][0][1] = val
 
 
     def save(self):
+        '''Saves the configuration to the cfg_file
+        '''
         with open(self._cfg_file, 'w') as fp:
             json.dump(self._cfg_attrs, fp)
 
 
 class Tuner:
     def __init__(self, image, cfg, process, title = ''):
+        ''' Parameter Tuner class
+        :param image: Input image
+        :type image: numpy.ndarray 
+        :param cfg: Parameters configuration
+        :type cfg: TunerCfg
+        :param process: The algorithm to be called whenever any parameter change
+        :type process: function
+        :param title: The title that appears on the window
+        :type process: str
+        '''
         self._TITLE = title 
         self._image = image 
         self._cfg = cfg
@@ -94,7 +132,12 @@ class Tuner:
 
         img = np.vstack(lines)
         cv.imshow(self._TITLE, img)
-    
+
 
     def get_cfg(self):
+        '''Get the resulting configuration
+
+        :returns: The configuration after the tuning process
+        :rtype: TunerCfg
+        '''
         return self._cfg

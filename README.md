@@ -1,23 +1,51 @@
-# canny-gui-helper-tool
+[//]: # (Image References)
 
-A GUI tool that helps finding right parameters for Canny Edge detection 
+[canny]: ./resources/canny.png
+[road]: ./resources/road.png
 
-How to run:
-   
-    python find_edges.py <file-name>
+# **canny-gui-parameter-tuner**
 
-Sample Output:
+A GUI tool that helps finding parameters for computer vision algorithms
 
-    GaussianBlur Filter Size: 13.000000
-    Threshold1: 28.000000
-    Threshold2: 115.000000
+## **How to use**
 
-Demo:
-   
-   https://youtu.be/xdiekchp-Uc
+There are two examples that shows how to use the tool.
 
-### License
+### **Find Edges**
 
-Copyright © 2016, [Maunesh Ahir](https://github.com/maunesh).
+Tune parameters for the Canny edge finder algorithm
+
+    python ./examples/canny_tuner.py <image-path>
+
+Output:
+
+    filterSize = 13
+    threshold1 = 28
+    threshold2 = 115
+
+![alt text][canny]
+
+### **Find Road Lanes**
+
+Tune parameters for the road lines finder algorithm
+
+    python ./examples/road_lines_tuner.py <image-path>
+
+Output:
+
+    top_cut = 435
+    bottom_cut = 58
+    base = 1095
+    height = 336
+    filterSize = 7
+    threshold1 = 50
+    threshold2 = 115
+    points_ths = 10
+    min_line_length = 6
+    max_line_gap = 8
+
+![alt text][road]
+
+### **License**
+
 Released under the [MIT License](LICENSE).
-   

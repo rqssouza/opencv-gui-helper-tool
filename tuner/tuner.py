@@ -3,9 +3,10 @@
 import numpy as np
 import cv2 as cv
 import json
+import argparse
 
 
-class TunerCfg:
+class Tuner_Cfg:
     ''' Represents the configuration object of Tuner class
     :param cfg_file: File containing the configuration
     :type cfg_file: str
@@ -45,12 +46,21 @@ class TunerCfg:
 
 
     def get_attrs(self):
-        '''Get value by attr name
+        '''Get the attributes list
 
         :returns: The list of attributes
-        :rtype: int
+        :rtype: list
         '''
         return self._cfg_attrs
+
+
+    def get_dict(self):
+        '''Get a dict with keyword and value of attrs
+
+        :returns: The dict with all attributes
+        :rtype: dict
+        '''
+        return {key:value for key, value, _ in self._cfg_attrs}
 
 
     def set_value(self, attr, val):
@@ -71,13 +81,19 @@ class TunerCfg:
             json.dump(self._cfg_attrs, fp)
 
 
+class Tuner_Args:
+    def __init__(self, args):
+        for key, value in args.items():
+            setattr(self, key, value)
+
+
 class Tuner:
     def __init__(self, image, cfg, process, title = ''):
         ''' Parameter Tuner class
         :param image: Input image
         :type image: numpy.ndarray 
         :param cfg: Parameters configuration
-        :type cfg: TunerCfg
+        :type cfg: Tuner_Cfg
         :param process: The algorithm to be called whenever any parameter change
         :type process: function
         :param title: The title that appears on the window
@@ -117,11 +133,11 @@ class Tuner:
     def _render(self):
         shape, imgs = self._process(
             image = self._image,
-            cfg = self._cfg,
+            args = Tuner_Args(self._cfg.get_dict()),
         )
         self._plot(
             shape = shape,
-            imgs = imgs, 
+            imgs = imgs,
         )
 
 
@@ -138,6 +154,27 @@ class Tuner:
         '''Get the resulting configuration
 
         :returns: The configuration after the tuning process
-        :rtype: TunerCfg
+        :rtype: Tuner_Cfg
         '''
         return self._cfg
+
+
+def Tuner_App(process, config, title, description = ''):
+    parser = argparse.ArgumentParser(description = description)
+    parser.add_argument('img_path', help = 'Image file')
+    parser.add_argument('-c', '--config_file',
+        help = 'Config file',
+        default = '.' + ''.join(title.split()) + '.cfg'
+    )
+    args = parser.parse_args()
+    image = cv.imread(args.img_path)
+
+    cfg = Tuner(
+            image = image,
+            cfg = Tuner_Cfg(args.config_file, config),
+            process = process,
+            title = title,
+    ).get_cfg()
+
+    cfg.save()
+    print(cfg)

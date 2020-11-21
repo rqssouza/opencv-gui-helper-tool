@@ -4,34 +4,6 @@ import cv2 as cv
 import numpy as np
 import argparse
 import tuner.tuner as tuner
-import canny_tuner as canny
-
-
-CFG_FILE = '.road_parameters.cfg'
-
-TOP_CUT = 'top_cut'
-BOTTOM_CUT = 'bottom_cut'
-BASE = 'base'
-HEIGHT = 'height'
-FILTER_SIZE = 'filterSize'
-THRESHOLD1 = 'threshold1'
-THRESHOLD2 = 'threshold2'
-POINTS_THS = 'points_ths'
-MIN_LINE_LENGTH = 'min_line_length'
-MAX_LINE_GAP = 'max_line_gap'
-
-DEFAULT_ATTRS = [
-    [TOP_CUT, 0, 2000],
-    [BOTTOM_CUT, 0, 2000],
-    [BASE, 100, 2000],
-    [HEIGHT, 100, 2000],
-    [FILTER_SIZE, 13, 300],
-    [THRESHOLD1, 28, 300],
-    [THRESHOLD2, 115, 300],
-    [POINTS_THS, 10, 20],
-    [MIN_LINE_LENGTH, 10, 255],
-    [MAX_LINE_GAP, 10, 255],
-]
 
 
 class _line:
@@ -193,49 +165,58 @@ def road_lines_calc(
     return (masked_image, line_edges, line_image)
 
 
-def process(image, cfg):
+def canny_calc(image, kernel_size, ths1, ths2):
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    smoothed_img = cv.GaussianBlur(image, (kernel_size, kernel_size), sigmaX=0, sigmaY=0)
+
+    return cv.Canny(smoothed_img, ths1, ths2)
+
+
+def process(image, args):
+    adj_k = lambda ksize : ksize + (ksize + 1) % 2
     shape = (2, 2)
     imgs = [image]
 
-    edges = canny.canny_calc(
+    edges = canny_calc(
         image = image,
-        filter_size = cfg.get_value(FILTER_SIZE),
-        threshold1 = cfg.get_value(THRESHOLD1),
-        threshold2 = cfg.get_value(THRESHOLD2),
+        kernel_size = adj_k(args.kernel_size),
+        ths1 = args.threshold1,
+        ths2 = args.threshold2,
     )
 
     imgs += list(road_lines_calc(
         image = image,
         edges = edges,
-        top_cut = cfg.get_value(TOP_CUT),
-        bottom_cut = cfg.get_value(BOTTOM_CUT),
-        base = cfg.get_value(BASE),
-        height = cfg.get_value(HEIGHT),
-        points_ths = cfg.get_value(POINTS_THS),
-        min_line_length = cfg.get_value(MIN_LINE_LENGTH),
-        max_line_gap = cfg.get_value(MAX_LINE_GAP),
+        top_cut = args.top_cut,
+        bottom_cut = args.bottom_cut,
+        base = args.base,
+        height = args.height,
+        points_ths = args.points_ths,
+        min_line_length = args.min_line_length,
+        max_line_gap = args.max_line_gap,
     ))
 
     return (shape, imgs)
 
 
-def main(image_path, cfg_file):
-    image = cv.imread(image_path)
-    cfg = tuner.Tuner(
-            image = image, 
-            cfg = tuner.TunerCfg(cfg_file, DEFAULT_ATTRS),
-            process = process,
-            title = 'Road Lines Parameter Tuner',
-        ).get_cfg()
-
-    cfg.save()
-    print(cfg)
+CFG = [
+    ['top_cut', 0, 2000],
+    ['bottom_cut', 0, 2000],
+    ['base', 100, 2000],
+    ['height', 100, 2000],
+    ['kernel_size', 13, 300],
+    ['threshold1', 28, 300],
+    ['threshold2', 115, 300],
+    ['points_ths', 10, 20],
+    ['min_line_length', 10, 255],
+    ['max_line_gap', 10, 255],
+]
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Tune parameters to find road lines.')
-    parser.add_argument('img_path', help='Image file')
-    parser.add_argument('-c', '--config', help='Config file', default=CFG_FILE)
-    args = parser.parse_args()
-
-    main(args.img_path, args.config)
+    tuner.Tuner_App(
+        process, 
+        CFG,
+        'Road Lines',
+        'Tune parameters to find road lines',
+    )
